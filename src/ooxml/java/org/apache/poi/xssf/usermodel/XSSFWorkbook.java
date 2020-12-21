@@ -603,14 +603,8 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
     public XSSFSheet cloneSheet(int sheetNum, String newName) {
         validateSheetIndex(sheetNum);
         XSSFSheet srcSheet = sheets.get(sheetNum);
-
-        if (newName == null) {
-            String srcName = srcSheet.getSheetName();
-            newName = getUniqueSheetName(srcName);
-        } else {
-            validateSheetName(newName);
-        }
-
+        validateSheetName(newName, srcSheet);
+        
         XSSFSheet clonedSheet = createSheet(newName);
 
         // copy sheet's relations
@@ -900,10 +894,13 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
         return wrapper;
     }
 
-    private void validateSheetName(final String sheetName) throws IllegalArgumentException {
-        if (containsSheet( sheetName, sheets.size() )) {
-            throw new IllegalArgumentException("The workbook already contains a sheet named '" + sheetName + "'");
-        }
+    private void validateSheetName(final String sheetName, XSSFSheet srcSheet) throws IllegalArgumentException {
+       if (sheetName == null) { 
+            String srcName = srcSheet.getSheetName();
+            sheetName = getUniqueSheetName(srcName);
+       }
+       if (containsSheet( sheetName, sheets.size() )) 
+            throw new IllegalArgumentException("The workbook already contains a sheet named '" + sheetName + "'");       
     }
 
     protected XSSFDialogsheet createDialogsheet(String sheetname, CTDialogsheet dialogsheet) {
