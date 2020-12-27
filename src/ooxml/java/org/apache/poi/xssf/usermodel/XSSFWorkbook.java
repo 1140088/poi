@@ -606,8 +606,18 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
         validateSheetName(newName, srcSheet);
         
         XSSFSheet clonedSheet = createSheet(newName);
-
-        // copy sheet's relations
+        XSSFDrawing drawing = copyRelations(srcSheet, clonedSheet);
+        addExternalRelations(srcSheet, clonedSheet);
+        writeRead(srcSheet, clonedSheet);
+        CTWorksheet ct = checkSupportedArg(clonedSheet);
+        clonedSheet.setSelected(false);
+        cloneDrawing(srcSheet, clonedSheet, drawing, ct);
+        return clonedSheet;
+    }
+   
+   
+public XSSFDrawing copyRelations(XSSFSheet srcSheet, XSSFSheet clonedSheet){
+           // copy sheet's relations
         List<RelationPart> rels = srcSheet.getRelationParts();
         // if the sheet being cloned has a drawing then remember it and re-create it too
         XSSFDrawing dg = null;
@@ -621,7 +631,9 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
 
             addRelation(rp, clonedSheet);
         }
-
+        return dg;
+     }
+     public void addExternalRelations(XSSFSheet srcSheet, XSSFSheet clonedSheet) {
         try {
             for(PackageRelationship pr : srcSheet.getPackagePart().getRelationships()) {
                 if (pr.getTargetMode() == TargetMode.EXTERNAL) {
@@ -632,8 +644,9 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
         } catch (InvalidFormatException e) {
             throw new POIXMLException("Failed to clone sheet", e);
         }
-
-
+        return clonedSheet;
+     }
+     public XSSFSheet writeRead(XSSFSheet srcSheet, XSSFSheet clonedSheet){
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             srcSheet.write(out);
             try (ByteArrayInputStream bis = new ByteArrayInputStream(out.toByteArray())) {
@@ -642,6 +655,9 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
         } catch (IOException e){
             throw new POIXMLException("Failed to clone sheet", e);
         }
+        
+     }
+     public CTWorksheet checkSupportedArg(XSSFSheet clonedSheet){
         CTWorksheet ct = clonedSheet.getCTWorksheet();
         if(ct.isSetLegacyDrawing()) {
             logger.log(POILogger.WARN, "Cloning sheets with comments is not yet supported.");
@@ -651,9 +667,11 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
             logger.log(POILogger.WARN, "Cloning sheets with page setup is not yet supported.");
             ct.unsetPageSetup();
         }
-
-        clonedSheet.setSelected(false);
-
+        return ct;
+      }
+        
+        
+     public void cloneDrawing(XSSFSheet srcSheet, XSSFSheet clonedSheet, XSSFDrawing dg, CTWorksheet ct){
         // clone the sheet drawing along with its relationships
         if (dg != null) {
             if(ct.isSetDrawing()) {
@@ -671,9 +689,7 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
                 addRelation(rp, clonedDg);
             }
         }
-        return clonedSheet;
-    }
-
+     }
     /**
      * @since 3.14-Beta1
      */
