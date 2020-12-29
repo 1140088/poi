@@ -601,17 +601,24 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
      * @throws POIXMLException if there were errors when cloning
      */
     public XSSFSheet cloneSheet(int sheetNum, String newName) {
+        //check if sheet's index is valid or not
         validateSheetIndex(sheetNum);
-        XSSFSheet srcSheet = sheets.get(sheetNum);
-        validateSheetName(newName, srcSheet);
-        
+       //get the source Sheet for the giving index 
+        XSSFSheet sourcSheet = sheets.get(sheetNum);
+       //check if sheet's name is valid or not
+        validateSheetName(newName, sourcSheet);
+       // create the cloned sheet 
         XSSFSheet clonedSheet = createSheet(newName);
-        XSSFDrawing drawing = copyRelations(srcSheet, clonedSheet);
-        addExternalRelations(srcSheet, clonedSheet);
-        writeRead(srcSheet, clonedSheet);
+       // copy the relation from sourse except drawing relation
+        XSSFDrawing drawing = copyRelations(sourcSheet, clonedSheet);
+       // add the external relation
+        addExternalRelations(sourcSheet, clonedSheet);
+       // write to output stream then read from input stream 
+        writeRead(sourcSheet, clonedSheet);
+       // check 
         CTWorksheet ct = checkSupportedArg(clonedSheet);
         clonedSheet.setSelected(false);
-        cloneDrawing(srcSheet, clonedSheet, drawing, ct);
+        cloneDrawing(sourcSheet, clonedSheet, drawing, ct);
         return clonedSheet;
     }
    
@@ -646,7 +653,7 @@ public XSSFDrawing copyRelations(XSSFSheet srcSheet, XSSFSheet clonedSheet){
         }
         return clonedSheet;
      }
-     public XSSFSheet writeRead(XSSFSheet srcSheet, XSSFSheet clonedSheet){
+     public void writeRead(XSSFSheet srcSheet, XSSFSheet clonedSheet){
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             srcSheet.write(out);
             try (ByteArrayInputStream bis = new ByteArrayInputStream(out.toByteArray())) {
