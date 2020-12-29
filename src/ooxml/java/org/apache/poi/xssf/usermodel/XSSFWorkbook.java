@@ -601,6 +601,7 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
      * @throws POIXMLException if there were errors when cloning
      */
     public XSSFSheet cloneSheet(int sheetNum, String newName) {
+       
         //check if sheet's index is valid or not
         validateSheetIndex(sheetNum);
        //get the source Sheet for the giving index 
@@ -615,9 +616,10 @@ public class XSSFWorkbook extends POIXMLDocument implements Workbook, Date1904Su
         addExternalRelations(sourcSheet, clonedSheet);
        // write to output stream then read from input stream 
         writeRead(sourcSheet, clonedSheet);
-       // check 
+       // check legacy drawing and page setup
         CTWorksheet ct = checkSupportedArg(clonedSheet);
         clonedSheet.setSelected(false);
+       // clone drawing relation 
         cloneDrawing(sourcSheet, clonedSheet, drawing, ct);
         return clonedSheet;
     }
